@@ -13,7 +13,6 @@ else:
     st.error("⚠️ Nebyl nalezen API klíč v Secrets.")
 
 # --- INICIALIZACE PAMĚTI ---
-# Upravili jsme klíče na univerzální "poskytovatel" a "platce"
 if "ai_data" not in st.session_state:
     st.session_state.ai_data = {
         "typ_smlouvy": "", "poskytovatel": "", "platce": "", "adresa": "", "byt": "",
@@ -31,36 +30,45 @@ def extrahuj_text_z_pdf(pdf_file):
         return ""
 
 def analyzuj_smlouvu_pomoci_gemini(text_smlouvy):
-    """AI nyní chápe právní rozdíl mezi nájmem a podnájmem."""
-    try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        prompt = f"""
-        Jsi profesionální analytik českých právních dokumentů. Extrahuj data z textu smlouvy o bydlení.
-        
-        DŮLEŽITÁ PRAVIDLA PRO ROLE:
-        1. Nejdříve zjisti název/typ smlouvy (Nájemní smlouva vs. Podnájemní smlouva).
-        2. Podle typu správně urči funkční role:
-           - Pokud je to NÁJEMNÍ smlouva: "poskytovatel" = Pronajímatel, "platce" = Nájemce.
-           - Pokud je to PODNÁJEMNÍ smlouva: "poskytovatel" = Nájemce, "platce" = Podnájemce.
-        3. NIKDY si nevymýšlej jména ani čísla. Pokud chybí, vrať prázdný řetězec "".
-        
-        Vrať výsledek POUZE jako čistý JSON:
-        {{
-            "typ_smlouvy": "Nájemní smlouva / Podnájemní smlouva / Jiná",
-            "poskytovatel": "Jméno toho, kdo byt přenechává a přijímá platby",
-            "platce": "Jméno toho, kdo byt užívá a platí",
-            "adresa": "ulice, město",
-            "byt": "číslo bytu",
-            "mesicni_najem": číslo,
-            "mesicni_zaloha": číslo
-        }}
+    """AI s bezpečnostní pojistkou (fallback) pro případ výpadku nového modelu."""
+    prompt = f"""
+    Jsi profesionální analytik českých právních dokumentů. Extrahuj data z textu smlouvy o bydlení.
+    
+    DŮLEŽITÁ PRAVIDLA PRO ROLE:
+    1. Nejdříve zjisti název/typ smlouvy (Nájemní smlouva vs. Podnájemní smlouva).
+    2. Podle typu správně urči funkční role:
+       - Pokud je to NÁJEMNÍ smlouva: "poskytovatel" = Pronajímatel, "platce" = Nájemce.
+       - Pokud je to PODNÁJEMNÍ smlouva: "poskytovatel" = Nájemce, "platce" = Podnájemce.
+    3. NIKDY si nevymýšlej jména ani čísla. Pokud chybí, vrať prázdný řetězec "".
+    
+    Vrať výsledek POUZE jako čistý JSON:
+    {{
+        "typ_smlouvy": "Nájemní smlouva / Podnájemní smlouva / Jiná",
+        "poskytovatel": "Jméno toho, kdo byt přenechává a přijímá platby",
+        "platce": "Jméno toho, kdo byt užívá a platí",
+        "adresa": "ulice, město",
+        "byt": "číslo bytu",
+        "mesicni_najem": číslo,
+        "mesicni_zaloha": číslo
+    }}
 
-        Text smlouvy:
-        {text_smlouvy}
-        """
-        
+    Text smlouvy:
+    {text_smlouvy}
+    """
+    try:
+        # Pokus 1: Nejnovější model
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
         response = model.generate_content(prompt)
+    except:
+        try:
+            # Pokus 2: Bezpečný fallback na univerzální model
+            model = genai.GenerativeModel('gemini-pro')
+            response = model.generate_content(prompt)
+        except Exception as e:
+            st.error(f"Chyba při komunikaci s AI: {e}")
+            return st.session_state.ai_data
+
+    try:
         cisty_text = response.text.strip()
         if "```json" in cisty_text:
             cisty_text = cisty_text.split("```json")[1].split("```")[0].strip()
@@ -70,7 +78,7 @@ def analyzuj_smlouvu_pomoci_gemini(text_smlouvy):
         data = json.loads(cisty_text)
         return data
     except Exception as e:
-        st.error(f"Chyba AI analýzy: {e}")
+        st.error(f"Chyba při čtení dat z AI: {e}")
         return st.session_state.ai_data
 
 # --- ROZHRANÍ APLIKACE ---
@@ -86,7 +94,6 @@ if pdf_smlouva and st.button("✨ Přečíst smlouvu pomocí AI", use_container_
         text = extrahuj_text_z_pdf(pdf_smlouva)
         if text.strip():
             vysledek = analyzuj_smlouvu_pomoci_gemini(text)
-            # Aktualizace paměti novými daty
             for key in vysledek:
                 st.session_state.ai_data[key] = vysledek[key]
             st.success(f"Hotovo! Detekována: **{st.session_state.ai_data.get('typ_smlouvy', 'Neznámá smlouva')}**")
@@ -126,9 +133,15 @@ if st.button("🚀 Spočítat vyúčtování", use_container_width=True):
                 celkem_zaplaceno = df['Castka'].sum()
 
                 text_svj = extrahuj_text_z_pdf(pdf_svj)
-                model = genai.GenerativeModel('gemini-1.5-flash')
                 prompt_svj = f"V tomto textu vyúčtování najdi celkovou částku za služby, které se přeúčtovávají uživateli bytu. Ignoruj fond oprav. Vrať jen číslo. Text: {text_svj}"
-                res_svj = model.generate_content(prompt_svj)
+                
+                # Stejná pojistka i pro výpočet SVJ
+                try:
+                    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                    res_svj = model.generate_content(prompt_svj)
+                except:
+                    model = genai.GenerativeModel('gemini-pro')
+                    res_svj = model.generate_content(prompt_svj)
                 
                 cisla = re.findall(r'\d+', res_svj.text.replace(" ", ""))
                 naklady_svj = int(cisla[0]) if cisla else 0
