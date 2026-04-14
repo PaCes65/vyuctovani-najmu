@@ -1,55 +1,105 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import PyPDF2 # Nová knihovna pro čtení PDF
 
-# --- Naše předchozí logika (mírně zjednodušená pro UI) ---
+# --- INICIALIZACE PAMĚTI FORMULÁŘE (Session State) ---
+# Toto zajistí, že se data z AI udrží v políčkách
+if "ai_data" not in st.session_state:
+    st.session_state.ai_data = {
+        "pronajimatel": "", "najemce": "", "adresa": "", "byt": "",
+        "mesicni_najem": 0, "mesicni_zaloha": 0
+    }
+
 class Smlouva:
-    def __init__(self, jmeno, datum_od, datum_do):
-        self.jmeno = jmeno
-        self.datum_od = datum_od # Streamlit už vrací objekty datetime.date
+    def __init__(self, pronajimatel, najemce, adresa, byt, datum_od, datum_do, mesicni_najem, mesicni_zaloha):
+        self.pronajimatel = pronajimatel
+        self.najemce = najemce
+        self.adresa = adresa
+        self.byt = byt
+        self.datum_od = datum_od
         self.datum_do = datum_do
+        self.mesicni_najem = mesicni_najem
+        self.mesicni_zaloha = mesicni_zaloha
 
-    def pocet_dni_v_roce(self, rok):
-        zacatek_roku = datetime(rok, 1, 1).date()
-        konec_roku = datetime(rok, 12, 31).date()
-        realny_zacatek = max(self.datum_od, zacatek_roku)
-        realny_konec = min(self.datum_do, konec_roku)
-        dny = (realny_konec - realny_zacatek).days + 1
-        return dny if dny > 0 else 0
+def extrahuj_text_z_pdf(pdf_file):
+    """Pomocná funkce pro vytažení textu z nahraného PDF souboru."""
+    try:
+        reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
+        return text
+    except Exception as e:
+        return f"Chyba při čtení PDF: {e}"
 
-# --- Grafické rozhraní pro mobil (Streamlit) ---
-st.set_page_config(page_title="Vyúčtování Nájmů", page_icon="📱", layout="centered")
+def analyzuj_smlouvu_pomoci_gemini(text_smlouvy):
+    """
+    Zde bude reálné volání Gemini API.
+    Zatím vracíme simulovaná (tzv. mock) data pro ukázku fungování UI.
+    """
+    # Simulujeme, že AI chvilku přemýšlí...
+    import time
+    time.sleep(2) 
+    
+    # Simulovaná odpověď od Gemini (reálně nám Gemini vrátí JSON)
+    return {
+        "pronajimatel": "Jan Novák st.", 
+        "najemce": "Madar Ruslan", 
+        "adresa": "Brněnská 123, Praha", 
+        "byt": "4B",
+        "mesicni_najem": 10500, 
+        "mesicni_zaloha": 2800
+    }
 
-st.title("📱 Vyúčtování nájmů")
-st.write("Aplikace pro rychlý výpočet ročního vyúčtování.")
+# --- MOBILNÍ ROZHRANÍ (STREAMLIT) ---
+st.set_page_config(page_title="Chytré vyúčtování", page_icon="🤖", layout="centered")
 
-st.header("1. Údaje ze smlouvy")
-jmeno_najemnika = st.text_input("Jméno nájemníka", placeholder="např. Jan Novák")
-col1, col2 = st.columns(2)
-with col1:
-    datum_od = st.date_input("Platnost OD")
-with col2:
-    datum_do = st.date_input("Platnost DO")
+st.title("🤖 Chytré vyúčtování nájmů")
 
-rok_vyuctovani = st.number_input("Rok vyúčtování", min_value=2020, max_value=2030, value=2025)
+# --- SEKCE A: AI PARSOVÁNÍ SMLOUVY ---
+st.header("1. Nahrání a analýza smlouvy")
+pdf_smlouva = st.file_uploader("Nahraj nájemní smlouvu (PDF) pro automatické vyplnění", type="pdf")
 
-st.header("2. Nahrání podkladů")
-# Tlačítka, která na mobilu otevřou výběr souborů
-pdf_svj = st.file_uploader("Nahraj vyúčtování od SVJ (PDF)", type="pdf")
-vypis_banka = st.file_uploader("Nahraj výpis plateb záloh (CSV/Excel)", type=["csv", "xlsx"])
+if pdf_smlouva is not None:
+    if st.button("✨ Přečíst smlouvu pomocí AI", use_container_width=True):
+        with st.spinner("AI čte smlouvu, moment strpení..."):
+            text = extrahuj_text_z_pdf(pdf_smlouva)
+            vytezena_data = analyzuj_smlouvu_pomoci_gemini(text)
+            
+            # Uložení dat z AI do paměti aplikace
+            st.session_state.ai_data.update(vytezena_data)
+            st.success("Smlouva úspěšně přečtena! Zkontroluj předvyplněné údaje níže.")
 
-st.header("3. Výpočet")
-if st.button("📊 Spočítat vyúčtování", use_container_width=True):
-    if not jmeno_najemnika or not pdf_svj or not vypis_banka:
-        st.error("⚠️ Prosím, vyplň jméno a nahraj oba soubory (SVJ i banku).")
-    else:
-        # Zde později zavoláme naši kompletní logiku pro parsování PDF
-        smlouva = Smlouva(jmeno_najemnika, datum_od, datum_do)
-        pocet_dni = smlouva.pocet_dni_v_roce(rok_vyuctovani)
-        
-        st.success("✅ Výpočet úspěšně dokončen!")
-        st.info(f"Nájemník {jmeno_najemnika} užíval byt v roce {rok_vyuctovani} celkem {pocet_dni} dní.")
-        
-        # Místo pro finální report
-        st.metric(label="Výsledný přeplatek/nedoplatek", value="Bude doplněno Kč")
+# --- SEKCE B: FORMULÁŘ (S PŘEDVYPLNĚNÍM) ---
+st.header("2. Kontrola a úprava údajů ze smlouvy")
+
+# Políčka berou svou výchozí hodnotu (value) z naší paměti (st.session_state)
+col_a1, col_a2 = st.columns(2)
+with col_a1:
+    pronajimatel = st.text_input("Pronajímatel", value=st.session_state.ai_data["pronajimatel"])
+    adresa = st.text_input("Adresa nemovitosti", value=st.session_state.ai_data["adresa"])
+with col_a2:
+    najemce = st.text_input("Nájemce", value=st.session_state.ai_data["najemce"])
+    byt = st.text_input("Číslo/Označení bytu", value=st.session_state.ai_data["byt"])
+
+col_b1, col_b2 = st.columns(2)
+with col_b1:
+    mesicni_najem = st.number_input("Měsíční čistý nájem (Kč)", value=int(st.session_state.ai_data["mesicni_najem"]), step=100)
+with col_b2:
+    mesicni_zaloha = st.number_input("Předepsaná záloha (Kč)", value=int(st.session_state.ai_data["mesicni_zaloha"]), step=100)
+
+col_c1, col_c2 = st.columns(2)
+with col_c1:
+    datum_od = st.date_input("Smlouva platná OD")
+with col_c2:
+    datum_do = st.date_input("Smlouva platná DO")
+
+# --- SEKCE C: DALŠÍ SOUBORY ---
+st.header("3. Podklady pro vyúčtování")
+pdf_svj_aktualni = st.file_uploader("1. Aktuální vyúčtování od SVJ (PDF)", type="pdf")
+pdf_svj_minule = st.file_uploader("2. PŘEDCHOZÍ vyúčtování (PDF)", type="pdf")
+vypis_banka = st.file_uploader("3. Výpis plateb (CSV/Excel)", type=["csv", "xlsx"])
+
+if st.button("🚀 Spočítat vyúčtování", use_container_width=True):
+    st.info("Zde proběhne finální výpočet...")
