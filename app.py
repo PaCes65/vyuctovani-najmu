@@ -4,17 +4,19 @@ from datetime import datetime
 import PyPDF2
 import google.generativeai as genai
 import json
+import re
 
 # --- NASTAVENÍ AI ---
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 else:
-    st.error("⚠️ Nebyl nalezen API klíč. Zkontroluj nastavení 'Secrets' ve Streamlitu.")
+    st.error("⚠️ Nebyl nalezen API klíč v Secrets.")
 
 # --- INICIALIZACE PAMĚTI ---
+# Upravili jsme klíče na univerzální "poskytovatel" a "platce"
 if "ai_data" not in st.session_state:
     st.session_state.ai_data = {
-        "pronajimatel": "", "najemce": "", "adresa": "", "byt": "",
+        "typ_smlouvy": "", "poskytovatel": "", "platce": "", "adresa": "", "byt": "",
         "mesicni_najem": 0, "mesicni_zaloha": 0
     }
 
@@ -29,107 +31,124 @@ def extrahuj_text_z_pdf(pdf_file):
         return ""
 
 def analyzuj_smlouvu_pomoci_gemini(text_smlouvy):
+    """AI nyní chápe právní rozdíl mezi nájmem a podnájmem."""
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
+        
         prompt = f"""
-        Vytáhni z textu tyto údaje a vrať je POUZE jako platný formát JSON. Dej si pozor na to, kdo je pronajímatel (majitel) a kdo nájemce:
+        Jsi profesionální analytik českých právních dokumentů. Extrahuj data z textu smlouvy o bydlení.
+        
+        DŮLEŽITÁ PRAVIDLA PRO ROLE:
+        1. Nejdříve zjisti název/typ smlouvy (Nájemní smlouva vs. Podnájemní smlouva).
+        2. Podle typu správně urči funkční role:
+           - Pokud je to NÁJEMNÍ smlouva: "poskytovatel" = Pronajímatel, "platce" = Nájemce.
+           - Pokud je to PODNÁJEMNÍ smlouva: "poskytovatel" = Nájemce, "platce" = Podnájemce.
+        3. NIKDY si nevymýšlej jména ani čísla. Pokud chybí, vrať prázdný řetězec "".
+        
+        Vrať výsledek POUZE jako čistý JSON:
         {{
-            "pronajimatel": "Jméno pronajímatele",
-            "najemce": "Jméno nájemce",
-            "adresa": "Ulice a město",
-            "byt": "Číslo bytu",
-            "mesicni_najem": cislo,
-            "mesicni_zaloha": cislo
+            "typ_smlouvy": "Nájemní smlouva / Podnájemní smlouva / Jiná",
+            "poskytovatel": "Jméno toho, kdo byt přenechává a přijímá platby",
+            "platce": "Jméno toho, kdo byt užívá a platí",
+            "adresa": "ulice, město",
+            "byt": "číslo bytu",
+            "mesicni_najem": číslo,
+            "mesicni_zaloha": číslo
         }}
-        Text smlouvy: {text_smlouvy}
-        """
-        response = model.generate_content(prompt)
-        cisty_text = response.text.replace("```json", "").replace("```", "").strip()
-        return json.loads(cisty_text)
-    except:
-        return st.session_state.ai_data
 
-def analyzuj_vyuctovani_svj(text_vyuctovani):
-    """Nová funkce: AI přečte roční vyúčtování a najde náklady pro nájemníka."""
-    try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        prompt = f"""
-        Jsi účetní expert. Přečti si text vyúčtování od SVJ/družstva.
-        Najdi celkovou částku za služby, které se běžně přeúčtovávají na nájemníka (např. teplo, voda, elektřina spol. prostor, výtah, odpad).
-        Nezapočítávej to, co platí majitel (fond oprav, odměny výboru).
-        Vrať POUZE JSON s jednou hodnotou:
-        {{
-            "uznatelne_naklady_celkem": cislo
-        }}
-        Text: {text_vyuctovani}
+        Text smlouvy:
+        {text_smlouvy}
         """
+        
         response = model.generate_content(prompt)
-        cisty_text = response.text.replace("```json", "").replace("```", "").strip()
-        return json.loads(cisty_text)
-    except:
-        return {"uznatelne_naklady_celkem": 0}
+        cisty_text = response.text.strip()
+        if "```json" in cisty_text:
+            cisty_text = cisty_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in cisty_text:
+            cisty_text = cisty_text.split("```")[1].split("```")[0].strip()
+            
+        data = json.loads(cisty_text)
+        return data
+    except Exception as e:
+        st.error(f"Chyba AI analýzy: {e}")
+        return st.session_state.ai_data
 
 # --- ROZHRANÍ APLIKACE ---
 st.set_page_config(page_title="Chytré vyúčtování", page_icon="🏢", layout="centered")
 
 st.title("🏢 Chytré vyúčtování nájmů")
 
-st.header("1. Smlouva")
-pdf_smlouva = st.file_uploader("Nahraj smlouvu (PDF) pro předvyplnění", type="pdf")
+st.header("1. Analýza smlouvy")
+pdf_smlouva = st.file_uploader("Nahraj smlouvu (PDF)", type="pdf")
+
 if pdf_smlouva and st.button("✨ Přečíst smlouvu pomocí AI", use_container_width=True):
-    with st.spinner("Čtu smlouvu..."):
+    with st.spinner("AI detekuje typ smlouvy a analyzuje role..."):
         text = extrahuj_text_z_pdf(pdf_smlouva)
-        st.session_state.ai_data.update(analyzuj_smlouvu_pomoci_gemini(text))
-        st.success("Hotovo! Zkontroluj a případně ručně oprav políčka níže.")
+        if text.strip():
+            vysledek = analyzuj_smlouvu_pomoci_gemini(text)
+            # Aktualizace paměti novými daty
+            for key in vysledek:
+                st.session_state.ai_data[key] = vysledek[key]
+            st.success(f"Hotovo! Detekována: **{st.session_state.ai_data.get('typ_smlouvy', 'Neznámá smlouva')}**")
+        else:
+            st.error("Z PDF se nepodařilo vytáhnout žádný text.")
 
-st.header("2. Údaje")
-col_a1, col_a2 = st.columns(2)
-with col_a1:
-    pronajimatel = st.text_input("Pronajímatel", value=st.session_state.ai_data.get("pronajimatel", ""))
-with col_a2:
-    najemce = st.text_input("Nájemce", value=st.session_state.ai_data.get("najemce", ""))
+st.header("2. Kontrola údajů")
+col1, col2 = st.columns(2)
+with col1:
+    poskytovatel = st.text_input("Poskytovatel bytu (přijímá peníze)", value=st.session_state.ai_data.get("poskytovatel", ""))
+    adresa = st.text_input("Adresa", value=st.session_state.ai_data.get("adresa", ""))
+with col2:
+    platce = st.text_input("Plátce (užívá byt a platí)", value=st.session_state.ai_data.get("platce", ""))
+    byt_c = st.text_input("Číslo bytu", value=st.session_state.ai_data.get("byt", ""))
 
-byt = st.text_input("Číslo bytu", value=st.session_state.ai_data.get("byt", ""))
+col3, col4 = st.columns(2)
+with col3:
+    m_najem = st.number_input("Čistý nájem (Kč)", value=int(st.session_state.ai_data.get("mesicni_najem", 0)))
+with col4:
+    m_zaloha = st.number_input("Záloha na služby (Kč)", value=int(st.session_state.ai_data.get("mesicni_zaloha", 0)))
 
-st.header("3. Podklady pro vyúčtování")
-pdf_svj_aktualni = st.file_uploader("1. Aktuální vyúčtování od SVJ (PDF)", type="pdf")
-vypis_banka = st.file_uploader("2. Výpis plateb (Excel/CSV)", type=["csv", "xlsx"])
+st.header("3. Podklady pro výpočet")
+pdf_svj = st.file_uploader("Aktuální vyúčtování SVJ (PDF)", type="pdf")
+vypis = st.file_uploader("Výpis plateb (Excel/CSV)", type=["csv", "xlsx"])
 
-# --- NOVÝ MOTOR PRO TLAČÍTKO ---
 if st.button("🚀 Spočítat vyúčtování", use_container_width=True):
-    if not pdf_svj_aktualni or not vypis_banka:
-        st.error("⚠️ Prosím nahraj vyúčtování od SVJ i výpis plateb.")
+    if not pdf_svj or not vypis:
+        st.error("Nahraj prosím vyúčtování SVJ a výpis plateb.")
     else:
-        with st.spinner("Zpracovávám tabulky a analyzuji vyúčtování..."):
+        with st.spinner("Počítám..."):
             try:
-                # 1. Výpočet zaplacených záloh z Excelu
-                if vypis_banka.name.endswith('.csv'):
-                    df = pd.read_csv(vypis_banka)
+                if vypis.name.endswith('.csv'):
+                    df = pd.read_csv(vypis)
                 else:
-                    df = pd.read_excel(vypis_banka)
+                    df = pd.read_excel(vypis)
                 
-                # Předpokládáme, že sloupec se jmenuje "Castka"
-                zaplaceno_zalohy = df['Castka'].sum()
+                celkem_zaplaceno = df['Castka'].sum()
 
-                # 2. Zjištění nákladů z PDF pomocí AI
-                text_svj = extrahuj_text_z_pdf(pdf_svj_aktualni)
-                vysledek_ai = analyzuj_vyuctovani_svj(text_svj)
-                naklady_svj = vysledek_ai.get("uznatelne_naklady_celkem", 0)
-
-                # 3. Matematika
-                rozdil = zaplaceno_zalohy - naklady_svj
-                stav = "PŘEPLATEK pro nájemníka" if rozdil >= 0 else "NEDOPLATEK (nájemník dluží)"
-
-                # 4. Zobrazení výsledku na displeji
-                st.success("✅ Výpočet dokončen!")
+                text_svj = extrahuj_text_z_pdf(pdf_svj)
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                prompt_svj = f"V tomto textu vyúčtování najdi celkovou částku za služby, které se přeúčtovávají uživateli bytu. Ignoruj fond oprav. Vrať jen číslo. Text: {text_svj}"
+                res_svj = model.generate_content(prompt_svj)
                 
-                col1, col2, col3 = st.columns(3)
-                col1.metric("Zaplaceno na zálohách", f"{zaplaceno_zalohy:,.0f} Kč")
-                col2.metric("Náklady domu (AI)", f"{naklady_svj:,.0f} Kč")
-                col3.metric("Výsledek", f"{abs(rozdil):,.0f} Kč")
-                
-                st.info(f"Konečný stav: **{stav}** ve výši **{abs(rozdil):,.0f} Kč**.")
-                st.write("*(Upozornění: AI čte náklady SVJ orientačně, vždy ověř s původním PDF dokumentem, zda nezapočítala např. fond oprav.)*")
+                cisla = re.findall(r'\d+', res_svj.text.replace(" ", ""))
+                naklady_svj = int(cisla[0]) if cisla else 0
 
+                rozdil = celkem_zaplaceno - naklady_svj
+                
+                st.divider()
+                st.subheader("Výsledek vyúčtování")
+                st.write(f"**Poskytovatel:** {poskytovatel}")
+                st.write(f"**Plátce:** {platce}")
+                st.write(f"**Byt č.:** {byt_c}")
+                
+                c1, c2 = st.columns(2)
+                c1.metric("Zaplacené zálohy", f"{celkem_zaplaceno:,.0f} Kč")
+                c2.metric("Skutečné náklady", f"{naklady_svj:,.0f} Kč")
+                
+                if rozdil >= 0:
+                    st.success(f"Přeplatek k vrácení plátci: {rozdil:,.0f} Kč")
+                else:
+                    st.error(f"Nedoplatek (plátce dluží): {abs(rozdil):,.0f} Kč")
+                    
             except Exception as e:
-                st.error(f"Při výpočtu nastala chyba: Ujisti se, že má tvůj Excel sloupeček pojmenovaný 'Castka'. Detail chyby: {e}")
+                st.error(f"Chyba při výpočtu: Ujisti se, že máš v Excelu sloupec 'Castka'. Detail chyby: {e}")
