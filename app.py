@@ -30,7 +30,7 @@ def extrahuj_text_z_pdf(pdf_file):
         return ""
 
 def analyzuj_smlouvu_pomoci_gemini(text_smlouvy):
-    """AI s bezpečnostní pojistkou (fallback) pro případ výpadku nového modelu."""
+    """AI s aktuálními názvy modelů od Googlu."""
     prompt = f"""
     Jsi profesionální analytik českých právních dokumentů. Extrahuj data z textu smlouvy o bydlení.
     
@@ -56,13 +56,13 @@ def analyzuj_smlouvu_pomoci_gemini(text_smlouvy):
     {text_smlouvy}
     """
     try:
-        # Pokus 1: Nejnovější model
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        # Používáme nejnovější rychlý model (verze 2.5)
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
     except:
         try:
-            # Pokus 2: Bezpečný fallback na univerzální model
-            model = genai.GenerativeModel('gemini-pro')
+            # Fallback na silnější model, pokud by první neprošel
+            model = genai.GenerativeModel('gemini-2.5-pro')
             response = model.generate_content(prompt)
         except Exception as e:
             st.error(f"Chyba při komunikaci s AI: {e}")
@@ -135,12 +135,12 @@ if st.button("🚀 Spočítat vyúčtování", use_container_width=True):
                 text_svj = extrahuj_text_z_pdf(pdf_svj)
                 prompt_svj = f"V tomto textu vyúčtování najdi celkovou částku za služby, které se přeúčtovávají uživateli bytu. Ignoruj fond oprav. Vrať jen číslo. Text: {text_svj}"
                 
-                # Stejná pojistka i pro výpočet SVJ
+                # Stejná úprava modelů pro vyúčtování SVJ
                 try:
-                    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                    model = genai.GenerativeModel('gemini-2.5-flash')
                     res_svj = model.generate_content(prompt_svj)
                 except:
-                    model = genai.GenerativeModel('gemini-pro')
+                    model = genai.GenerativeModel('gemini-2.5-pro')
                     res_svj = model.generate_content(prompt_svj)
                 
                 cisla = re.findall(r'\d+', res_svj.text.replace(" ", ""))
