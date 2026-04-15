@@ -191,4 +191,3 @@ if st.button("🚀 Vygenerovat normované vyúčtování", use_container_width=T
 
             except Exception as e:
                 st.error(f"Chyba ve výpočtu: {e}")
-                
