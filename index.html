@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a3754">
+  <title>Překlad textů CZ</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <p class="eyebrow">SPOTIFY · ČESKY</p>
+      <h1>Překlad textů CZ</h1>
+      <p class="lead">Text skladby a český překlad přímo v mobilním prohlížeči.</p>
+    </header>
+
+    <section class="card" aria-labelledby="step-title">
+      <h2 id="step-title">Najít skladbu</h2>
+      <p class="hint">Ve Spotify otevři skladbu → <strong>⋮ → Sdílet → Kopírovat odkaz</strong>. Pak odkaz vlož sem.</p>
+      <form id="lookup">
+        <label for="link">Odkaz na skladbu ze Spotify</label>
+        <div class="input-row">
+          <input id="link" type="url" inputmode="url" autocomplete="off" placeholder="https://open.spotify.com/track/…">
+          <button id="paste" class="secondary" type="button">Vložit</button>
+        </div>
+        <details>
+          <summary>Nemám odkaz · zadat název ručně</summary>
+          <label for="title-input">Název skladby</label>
+          <input id="title-input" type="text" autocomplete="off" placeholder="Např. Me gustas tu">
+          <label for="artist-input">Interpret (pomůže najít správný text)</label>
+          <input id="artist-input" type="text" autocomplete="off" placeholder="Např. Manu Chao">
+        </details>
+        <div class="actions">
+          <button id="find" class="primary" type="submit">Najít text</button>
+          <label class="language" for="language">Jazyk textu
+            <select id="language">
+              <option value="auto">Rozpoznat</option>
+              <option value="es">Španělština</option>
+              <option value="en">Angličtina</option>
+              <option value="fr">Francouzština</option>
+              <option value="de">Němčina</option>
+              <option value="it">Italština</option>
+              <option value="pt">Portugalština</option>
+            </select>
+          </label>
+        </div>
+      </form>
+    </section>
+
+    <p id="status" class="status" role="status" aria-live="polite">Připraveno. Vlož odkaz nebo napiš název skladby.</p>
+    <div id="candidates" class="candidates" aria-label="Nalezené texty"></div>
+
+    <section class="result" aria-label="Text a český překlad">
+      <h2 id="song-heading"></h2>
+      <p id="progress" class="progress"></p>
+      <div id="lyrics" class="lyrics"></div>
+    </section>
+
+    <footer>
+      Text: <a href="https://lrclib.net/">LRCLIB</a> · Překlad: <a href="https://mymemory.translated.net/doc/usagelimits.php">MyMemory</a>.
+      Bezplatná služba má denní limit. Stránka nesleduje přehrávání ve Spotify; po změně skladby vlož nový odkaz.
+    </footer>
+  </main>
+</body>
+</html>
