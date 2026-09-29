@@ -1,5 +1,7 @@
 # Mobilní web bez instalace APK
 
+Odkaz pro telefon: [Překlad textů CZ](https://htmlpreview.github.io/?https://github.com/PaCes65/vyuctovani-najmu/blob/preklad-textu-cz/PrekladTextuCZ-Web.html). Náhled načítá veřejný samostatný HTML soubor z větve `preklad-textu-cz` v repozitáři `PaCes65/vyuctovani-najmu`; hlavní větev repozitáře se tím nemění.
+
 Otevřete `index.html` přes HTTPS ve veřejném statickém hostingu. Jediný soubor `../PrekladTextuCZ-Web.html` lze stáhnout a otevřít i místně v mobilním prohlížeči. Stránka nepotřebuje serverovou aplikaci, účet Spotify ani API klíč.
 
 V telefonu ve Spotify zkopírujte odkaz na skladbu. Vložte jej do stránky, klepněte na **Najít text** a případně vyberte správného interpreta. Název a interpreta lze zadat i ručně. Stránka získá název skladby přes veřejný Spotify oEmbed, text z LRCLIB a český překlad z MyMemory. Zdrojové řádky a překlady se zobrazují vedle sebe.
