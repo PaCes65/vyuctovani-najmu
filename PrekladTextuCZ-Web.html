@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a3754">
+  <title>Překlad textů CZ</title>
+  <style>
+:root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #071f31; color: #f8fbff; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: linear-gradient(160deg, #073451, #0d2740 58%, #071e30); }
+.app { width: min(100%, 720px); margin: auto; padding: max(25px, env(safe-area-inset-top)) 18px max(30px, env(safe-area-inset-bottom)); }
+header { padding: 3px 2px 19px; }
+.eyebrow { color: #9ce9f2; font-size: .73rem; font-weight: 800; letter-spacing: .16em; margin: 0 0 5px; }
+h1 { font-size: clamp(1.8rem, 7vw, 2.7rem); line-height: 1.1; margin: 0; letter-spacing: -.03em; }
+.lead { color: #c9dce8; font-size: 1rem; line-height: 1.45; margin: 11px 0 0; }
+.card { background: #ffffff12; border: 1px solid #ffffff25; border-radius: 18px; padding: 20px; box-shadow: 0 12px 35px #0002; }
+.card h2 { margin: 0 0 7px; font-size: 1.17rem; }
+.hint { color: #d0e3ed; line-height: 1.5; margin: 0 0 19px; }
+label { display: block; color: #dbeaf0; font-size: .9rem; font-weight: 650; margin-bottom: 7px; }
+input, select, button { font: inherit; }
+input, select { color: #fff; background: #001a2d99; border: 1px solid #7d9bad88; border-radius: 10px; padding: 12px 13px; outline: none; }
+input { width: 100%; min-width: 0; }
+input::placeholder { color: #9db8c7; opacity: 1; }
+input:focus, select:focus, button:focus-visible, summary:focus-visible { outline: 2px solid #84e8f1; outline-offset: 2px; }
+select { display: block; width: 100%; margin-top: 7px; }
+.input-row { display: flex; gap: 8px; }
+button { border-radius: 10px; border: 1px solid transparent; padding: 11px 16px; cursor: pointer; font-weight: 750; }
+button:disabled { opacity: .55; cursor: wait; }
+.secondary { color: #e9fbff; border-color: #9ed5e080; background: #ffffff19; }
+.primary { color: #082f41; background: #98e7d7; min-height: 46px; white-space: nowrap; }
+details { margin-top: 16px; padding: 12px 0 0; border-top: 1px solid #ffffff25; }
+summary { color: #bdebf1; cursor: pointer; font-size: .88rem; font-weight: 650; }
+details label { margin-top: 15px; }
+.actions { display: flex; align-items: end; gap: 14px; margin-top: 19px; }
+.language { flex: 1; margin: 0; font-size: .78rem; }
+.language select { padding: 11px; }
+.status { min-height: 2.5em; color: #d2e8ef; font-size: .93rem; line-height: 1.4; margin: 20px 2px; }
+.status[data-type="error"] { color: #ffd5ca; }
+.status[data-type="success"] { color: #9aefce; }
+.candidates { display: grid; gap: 8px; }
+.candidates:empty { display: none; }
+.candidate { display: grid; gap: 3px; width: 100%; text-align: left; color: #e9f9fe; border-color: #ffffff36; background: #ffffff13; }
+.candidate span { color: #bfd7e1; font-size: .81rem; font-weight: 400; }
+.candidate[aria-pressed="true"] { border-color: #98e7d7; background: #98e7d729; }
+.result { padding: 10px 1px 20px; }
+.result h2 { font-size: 1.22rem; margin: 10px 0 0; }
+.result h2:empty { display: none; }
+.progress { color: #adcad8; font-size: .8rem; margin: 8px 0 16px; }
+.line { padding: 10px 15px 13px; border-left: 3px solid #96e5ee; margin: 0 0 13px; background: #ffffff10; border-radius: 0 11px 11px 0; }
+.original { font-size: clamp(1.08rem, 4.8vw, 1.4rem); line-height: 1.4; font-weight: 700; margin: 0; }
+.translated { color: #b1f0d9; font-size: clamp(1rem, 4.2vw, 1.17rem); line-height: 1.45; margin: 6px 0 0; }
+.spacer { height: 12px; }
+footer { border-top: 1px solid #ffffff24; color: #b9ced9; font-size: .76rem; line-height: 1.55; padding: 18px 1px 0; }
+footer a { color: #a4eff1; }
+@media (max-width: 370px) { .actions { display: grid; } .input-row { display: grid; } }
+
+</style>
+  
+</head>
+<body>
+  <main class="app">
+    <header>
+      <p class="eyebrow">SPOTIFY · ČESKY</p>
+      <h1>Překlad textů CZ</h1>
+      <p class="lead">Text skladby a český překlad přímo v mobilním prohlížeči.</p>
+    </header>
+
+    <section class="card" aria-labelledby="step-title">
+      <h2 id="step-title">Najít skladbu</h2>
+      <p class="hint">Ve Spotify otevři skladbu → <strong>⋮ → Sdílet → Kopírovat odkaz</strong>. Pak odkaz vlož sem.</p>
+      <form id="lookup">
+        <label for="link">Odkaz na skladbu ze Spotify</label>
+        <div class="input-row">
+          <input id="link" type="url" inputmode="url" autocomplete="off" placeholder="https://open.spotify.com/track/…">
+          <button id="paste" class="secondary" type="button">Vložit</button>
+        </div>
+        <details>
+          <summary>Nemám odkaz · zadat název ručně</summary>
+          <label for="title-input">Název skladby</label>
+          <input id="title-input" type="text" autocomplete="off" placeholder="Např. Me gustas tu">
+          <label for="artist-input">Interpret (pomůže najít správný text)</label>
+          <input id="artist-input" type="text" autocomplete="off" placeholder="Např. Manu Chao">
+        </details>
+        <div class="actions">
+          <button id="find" class="primary" type="submit">Najít text</button>
+          <label class="language" for="language">Jazyk textu
+            <select id="language">
+              <option value="auto">Rozpoznat</option>
+              <option value="es">Španělština</option>
+              <option value="en">Angličtina</option>
+              <option value="fr">Francouzština</option>
+              <option value="de">Němčina</option>
+              <option value="it">Italština</option>
+              <option value="pt">Portugalština</option>
+            </select>
+          </label>
+        </div>
+      </form>
+    </section>
+
+    <p id="status" class="status" role="status" aria-live="polite">Připraveno. Vlož odkaz nebo napiš název skladby.</p>
+    <div id="candidates" class="candidates" aria-label="Nalezené texty"></div>
+
+    <section class="result" aria-label="Text a český překlad">
+      <h2 id="song-heading"></h2>
+      <p id="progress" class="progress"></p>
+      <div id="lyrics" class="lyrics"></div>
+    </section>
+
+    <footer>
+      Text: <a href="https://lrclib.net/">LRCLIB</a> · Překlad: <a href="https://mymemory.translated.net/doc/usagelimits.php">MyMemory</a>.
+      Bezplatná služba má denní limit. Stránka nesleduje přehrávání ve Spotify; po změně skladby vlož nový odkaz.
+    </footer>
+  </main>
+<script>
+"use strict";
+function spotifyTrackId(value) {
+  const input = String(value || "").trim();
+  const uri = input.match(/^spotify:track:([A-Za-z0-9]{22})$/);
+  if (uri) return uri[1];
+  try {
+    const url = new URL(input);
+    if (url.protocol !== "https:" || url.hostname !== "open.spotify.com") return null;
+    return url.pathname.match(/^\/(?:intl-[a-z]{2}\/)?track\/([A-Za-z0-9]{22})\/?$/i)?.[1] || null;
+  } catch {
+    return null;
+  }
+}
+
+function cleanTitle(title) {
+  return String(title || "")
+    .replace(/\s*[-–]\s*(?:remaster(?:ed)?|live|radio edit|single version|acoustic|sped up|slowed).*$/i, "")
+    .replace(/\s*\((?:feat\.?|ft\.?|with|remaster(?:ed)?|live|radio edit|acoustic)[^)]*\)/gi, "")
+    .trim();
+}
+
+function normalized(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("cs")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function rankLyrics(records, title, artist = "") {
+  const wantTitle = normalized(title);
+  const wantArtist = normalized(artist);
+  return records
+    .filter(item => !item.instrumental && (item.syncedLyrics || item.plainLyrics) && (item.trackName || item.name))
+    .map(item => {
+      const gotTitle = normalized(item.trackName || item.name);
+      const gotArtist = normalized(item.artistName);
+      let score = gotTitle === wantTitle ? 100 : gotTitle.includes(wantTitle) || wantTitle.includes(gotTitle) ? 35 : 0;
+      if (wantArtist) score += gotArtist === wantArtist ? 60 : gotArtist.includes(wantArtist) || wantArtist.includes(gotArtist) ? 25 : -20;
+      if (item.syncedLyrics) score += 5;
+      return { ...item, score };
+    })
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score || Math.abs((a.duration || 0) - 210) - Math.abs((b.duration || 0) - 210))
+    .slice(0, 8);
+}
+
+function parseLyrics(record) {
+  const source = record.syncedLyrics || record.plainLyrics || "";
+  return source.split(/\r?\n/).map(raw => {
+    const time = raw.match(/^\[(\d{1,3}):(\d{2})(?:\.(\d{1,3}))?\]\s*/);
+    const text = time ? raw.slice(time[0].length) : raw;
+    const seconds = time ? Number(time[1]) * 60 + Number(time[2]) + Number(`0.${(time[3] || "0").padEnd(3, "0")}`) : null;
+    return { text: text.trim(), seconds };
+  }).filter((line, index, list) => line.text || (index > 0 && index < list.length - 1));
+}
+
+const WORDS = {
+  es: ["que", "voy", "hacer", "gusta", "gustas", "corazon", "quiero", "tengo", "pero", "para", "noche", "hoy", "dia", "como", "con", "sin", "esto"],
+  fr: ["je", "suis", "pas", "plus", "avec", "mais", "pour", "quoi", "mon", "dans", "nous", "vous", "cest", "sont", "faire"],
+  en: ["the", "and", "you", "love", "your", "with", "this", "that", "dont", "what", "where", "when", "never", "will", "from"],
+  de: ["ich", "und", "nicht", "dich", "mein", "dein", "wird", "hier", "immer", "noch", "ein", "eine", "mit"],
+  it: ["che", "non", "sono", "amore", "per", "con", "come", "quando", "dove", "voglio", "questo", "bella"],
+  pt: ["voce", "nao", "para", "com", "quero", "amor", "mais", "quando", "onde", "estou", "hoje", "coracao"],
+  cs: ["jsem", "jsi", "nevim", "kdyz", "proc", "vsechno", "laska", "srdce", "dnes", "mam", "tebe", "kde", "cesky"]
+};
+
+function guessLanguage(text, fallback = "en") {
+  const words = new Set(normalized(text).split(" "));
+  const score = Object.entries(WORDS).map(([lang, markers]) => [lang, markers.reduce((total, word) => total + (words.has(word) ? 1 : 0), 0)]);
+  score.sort((a, b) => b[1] - a[1]);
+  return score[0][1] ? score[0][0] : fallback;
+}
+
+function languageForLine(text, selected, songLanguage) {
+  if (selected !== "auto") return selected;
+  const words = new Set(normalized(text).split(" "));
+  if (words.has("je") || words.has("suis") || words.has("sais")) return "fr";
+  if (words.has("voy") || words.has("gusta") || words.has("gustas")) return "es";
+  return guessLanguage(text, songLanguage);
+}
+
+function decodeEntities(value) {
+  const named = { amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: " " };
+  return String(value || "").replace(/&(#x[0-9a-f]+|#\d+|amp|quot|apos|lt|gt|nbsp);/gi, (_, code) => {
+    if (code[0] === "#") {
+      const number = code[1].toLowerCase() === "x" ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10);
+      return Number.isInteger(number) && number > 0 && number <= 0x10ffff ? String.fromCodePoint(number) : "";
+    }
+    return named[code.toLowerCase()] || "";
+  });
+}
+
+
+const $ = id => document.getElementById(id);
+const link = $("link");
+const title = $("title-input");
+const artist = $("artist-input");
+const language = $("language");
+const candidates = $("candidates");
+const lyrics = $("lyrics");
+const songHeading = $("song-heading");
+const status = $("status");
+const progress = $("progress");
+let selectedRecord = null;
+let run = 0;
+
+function message(text, type = "") {
+  status.textContent = text;
+  status.dataset.type = type;
+}
+
+function cacheRead() {
+  try { return JSON.parse(localStorage.getItem("preklad-cz-cache-v1") || "{}"); }
+  catch { return {}; }
+}
+
+const cache = cacheRead();
+function cacheWrite(key, value) {
+  cache[key] = value;
+  const keys = Object.keys(cache);
+  if (keys.length > 1000) keys.slice(0, keys.length - 1000).forEach(old => delete cache[old]);
+  try { localStorage.setItem("preklad-cz-cache-v1", JSON.stringify(cache)); }
+  catch { /* Translation still works when browser storage is disabled. */ }
+}
+
+async function json(url) {
+  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!response.ok) {
+    if (response.status === 429) throw new Error("Služba má právě příliš mnoho požadavků. Zkus to za chvíli.");
+    throw new Error(`Služba neodpověděla (HTTP ${response.status}).`);
+  }
+  return response.json();
+}
+
+async function findSong() {
+  const request = ++run;
+  selectedRecord = null;
+  lyrics.replaceChildren();
+  candidates.replaceChildren();
+  songHeading.textContent = "";
+  progress.textContent = "";
+  $("find").disabled = true;
+  message("Hledám skladbu a text…");
+  try {
+    const value = link.value.trim();
+    if (value) {
+      const id = spotifyTrackId(value);
+      if (!id) throw new Error("Odkaz musí vést na skladbu open.spotify.com/track/… Zkus ve Spotify zvolit Kopírovat odkaz, nebo vyplň název a interpreta ručně.");
+      const spotifyUrl = `https://open.spotify.com/track/${id}`;
+      const meta = await json(`https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`);
+      if (request !== run) return;
+      title.value = meta.title || "";
+    }
+    const track = title.value.trim();
+    const performer = artist.value.trim();
+    if (!track) throw new Error("Vlož odkaz ze Spotify nebo napiš název skladby.");
+    if (track.length > 200 || performer.length > 200) throw new Error("Název nebo interpret je příliš dlouhý.");
+    let results = await searchLyrics(track, performer);
+    if (request !== run) return;
+    let ranked = rankLyrics(results, track, performer);
+    if (!ranked.length && performer) {
+      results = await searchLyrics(track, "");
+      ranked = rankLyrics(results, track);
+    }
+    if (!ranked.length && cleanTitle(track) !== track) {
+      results = await searchLyrics(cleanTitle(track), performer);
+      ranked = rankLyrics(results, cleanTitle(track), performer);
+      if (!ranked.length && performer) {
+        results = await searchLyrics(cleanTitle(track), "");
+        ranked = rankLyrics(results, cleanTitle(track));
+      }
+    }
+    if (request !== run) return;
+    if (!ranked.length) {
+      message("Text se v LRCLIB nenašel. Zkus upravit název nebo interpreta.", "error");
+      return;
+    }
+    showCandidates(ranked);
+    if (ranked.length === 1 || (performer && ranked[0].score >= ranked[1]?.score + 40)) choose(ranked[0]);
+    else message("Vyber správného interpreta ze seznamu.");
+  } catch (error) {
+    if (request === run) message(error.message || "Načtení se nepodařilo.", "error");
+  } finally {
+    $("find").disabled = false;
+  }
+}
+
+async function searchLyrics(track, performer) {
+  const params = new URLSearchParams({ track_name: track });
+  if (performer) params.set("artist_name", performer);
+  const data = await json(`https://lrclib.net/api/search?${params}`);
+  if (!Array.isArray(data)) throw new Error("LRCLIB vrátil nečekanou odpověď.");
+  return data;
+}
+
+function showCandidates(records) {
+  candidates.replaceChildren();
+  for (const record of records) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "candidate";
+    button.dataset.recordId = String(record.id);
+    const name = document.createElement("strong");
+    name.textContent = record.trackName || record.name;
+    const info = document.createElement("span");
+    info.textContent = `${record.artistName || "Neznámý interpret"} · ${record.albumName || "Album neuvedeno"}`;
+    button.append(name, info);
+    button.addEventListener("click", () => choose(record));
+    candidates.append(button);
+  }
+}
+
+function choose(record) {
+  selectedRecord = record;
+  run++;
+  [...candidates.children].forEach(button => button.setAttribute("aria-pressed", String(button.dataset.recordId === String(record.id))));
+  songHeading.textContent = `${record.trackName || record.name} — ${record.artistName || ""}`;
+  renderLyrics();
+  translateLyrics();
+}
+
+function renderLyrics() {
+  lyrics.replaceChildren();
+  if (!selectedRecord) return;
+  for (const line of parseLyrics(selectedRecord)) {
+    if (!line.text) {
+      const spacer = document.createElement("div");
+      spacer.className = "spacer";
+      lyrics.append(spacer);
+      continue;
+    }
+    const row = document.createElement("div");
+    row.className = "line";
+    row.dataset.original = line.text;
+    const original = document.createElement("p");
+    original.className = "original";
+    original.textContent = line.text;
+    const translated = document.createElement("p");
+    translated.className = "translated";
+    translated.textContent = "Překládám…";
+    row.append(original, translated);
+    lyrics.append(row);
+  }
+}
+
+async function translateOne(text, source) {
+  if (source === "cs") return text;
+  const bytes = new TextEncoder().encode(text).length;
+  if (bytes > 500) throw new Error("Jeden řádek je pro bezplatný překladač příliš dlouhý.");
+  const params = new URLSearchParams({ q: text, langpair: `${source}|cs`, mt: "1" });
+  const data = await json(`https://api.mymemory.translated.net/get?${params}`);
+  if (Number(data.responseStatus) !== 200 || data.quotaFinished) {
+    throw new Error(data.quotaFinished ? "Dnešní bezplatný limit překladače byl vyčerpán." : (data.responseDetails || "Překlad se nepodařil."));
+  }
+  const machine = Array.isArray(data.matches) ? data.matches.find(match => match["created-by"] === "MT!" && match.translation) : null;
+  const result = decodeEntities(machine?.translation || data.responseData?.translatedText || "").trim();
+  if (!result) throw new Error("Překladač vrátil prázdnou odpověď.");
+  return result;
+}
+
+async function translateLyrics() {
+  if (!selectedRecord) return;
+  const request = ++run;
+  const rows = [...lyrics.querySelectorAll(".line")];
+  const songLanguage = guessLanguage(rows.map(row => row.dataset.original).join(" "), "en");
+  const groups = new Map();
+  for (const row of rows) {
+    const original = row.dataset.original;
+    const source = languageForLine(original, language.value, songLanguage);
+    const key = `${source}|${original}`;
+    if (!groups.has(key)) groups.set(key, { key, original, source, nodes: [] });
+    groups.get(key).nodes.push(row.querySelector(".translated"));
+  }
+  const pending = [];
+  for (const group of groups.values()) {
+    if (cache[group.key]) group.nodes.forEach(node => { node.textContent = cache[group.key]; });
+    else if (group.source === "cs") group.nodes.forEach(node => { node.textContent = group.original; });
+    else pending.push(group);
+  }
+  message("Text nalezen. Překládám do češtiny…");
+  progress.textContent = `${groups.size - pending.length}/${groups.size} různých řádků`;
+  let cursor = 0;
+  let done = groups.size - pending.length;
+  let firstError = "";
+  async function worker() {
+    while (cursor < pending.length && request === run) {
+      const group = pending[cursor++];
+      try {
+        const result = await translateOne(group.original, group.source);
+        if (request !== run) return;
+        cacheWrite(group.key, result);
+        group.nodes.forEach(node => { node.textContent = result; });
+      } catch (error) {
+        if (request !== run) return;
+        firstError ||= error.message || "Překlad se nepodařil.";
+        group.nodes.forEach(node => { node.textContent = "Překlad není dostupný."; });
+        if (/limit/i.test(firstError)) cursor = pending.length;
+      }
+      done++;
+      progress.textContent = `${done}/${groups.size} různých řádků`;
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(3, pending.length) }, worker));
+  if (request !== run) return;
+  message(firstError || "Hotovo. Překlad je uložený v tomto prohlížeči.", firstError ? "error" : "success");
+}
+
+$("lookup").addEventListener("submit", event => { event.preventDefault(); findSong(); });
+$("paste").addEventListener("click", async () => {
+  try { link.value = await navigator.clipboard.readText(); link.focus(); }
+  catch { link.focus(); message("Klepni do pole a podrž prst → Vložit."); }
+});
+language.addEventListener("change", () => {
+  if (selectedRecord) {
+    renderLyrics();
+    translateLyrics();
+  }
+});
+
+const incoming = new URL(location.href).searchParams.get("track");
+if (incoming && spotifyTrackId(incoming)) { link.value = incoming; findSong(); }
+
+</script>
+</body>
+</html>
